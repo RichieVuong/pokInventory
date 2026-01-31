@@ -1,0 +1,23 @@
+<div
+    class="aspect-[2.5/3.5] relative rounded-lg bg-slate-200/50 border-2 border-slate-200 flex items-center justify-center group overflow-hidden transition-all duration-300 hover:border-yellow-400 hover:shadow-lg">
+    {% if card %}
+    <img src="{{ card.image_url }}" alt="{{ card.name }}" class="w-full h-full object-cover">
+
+    <!-- Hover Info -->
+    <div
+        class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center text-white p-2 text-center pointer-events-none">
+        <span class="font-bold text-sm">{{ card.name }}</span>
+        <span class="text-xs text-gray-300">{{ card.card_id }}</span>
+        <span class="text-xs text-yellow-400 mt-1">{{ card.set_name }}</span>
+    </div>
+    {% else %}
+    <!-- Empty Slot: "Add Card" on Hover -->
+    <div
+        class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/10 backdrop-blur-[2px]">
+        <button hx-get="{% url 'binder' binder.id %}?modal=true" hx-target="body" hx-swap="beforeend"
+            class="bg-yellow-500 hover:bg-yellow-400 text-white font-bold py-2 px-4 rounded-full shadow-lg transform scale-90 group-hover:scale-105 transition-transform flex items-center gap-2 cursor-pointer">
+            <span>+</span> Add Card
+        </button>
+    </div>
+    {% endif %}
+</div>

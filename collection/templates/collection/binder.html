@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="min-h-screen flex flex-col items-center justify-center py-8">
+
+    <!-- Navigation / Header -->
+    {% if not is_cover %}
+    <div class="mb-6 flex items-center justify-between w-full max-w-6xl px-4">
+        <h1 class="text-3xl font-bold text-yellow-400">{{ binder.name }}</h1>
+        <div class="flex space-x-4">
+            {% if has_previous %}
+            <a href="{% if previous_page == 0 %}{% url 'binder_cover' binder.id %}{% else %}{% url 'binder_page' binder.id previous_page %}{% endif %}"
+                class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-white transition">
+                {% if previous_page == 0 %}Close Binder{% else %}Previous Page{% endif %}
+            </a>
+            {% else %}
+            <span class="px-4 py-2 bg-gray-800 text-gray-600 rounded cursor-not-allowed">Previous Page</span>
+            {% endif %}
+
+            <span class="px-4 py-2 text-gray-400">Page {{ page }} of {{ total_pages }}</span>
+
+            {% if has_next %}
+            <a href="{% url 'binder_page' binder.id next_page %}"
+                class="px-4 py-2 bg-yellow-600 hover:bg-yellow-500 rounded text-white transition">Next Page</a>
+            {% else %}
+            <span class="px-4 py-2 bg-gray-800 text-gray-600 rounded cursor-not-allowed">Next Page</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Binder Container -->
+    <div
+        class="relative w-full max-w-6xl aspect-[4/3] flex overflow-hidden transition-all duration-500 {% if not is_cover %}bg-gray-800 rounded-lg shadow-2xl border-4 border-gray-700{% endif %}">
+
+        {% if not is_cover %}
+        <!-- Spine (Visual only, visible when open) -->
+        <div
+            class="absolute left-1/2 top-0 bottom-0 w-8 -ml-4 bg-gradient-to-r from-gray-900 via-gray-700 to-gray-900 z-10 shadow-inner flex flex-col justify-around py-4">
+            <!-- Binder Rings -->
+            <div class="w-full h-8 bg-gray-400 rounded-full shadow-lg mx-auto w-10/12"></div>
+            <div class="w-full h-8 bg-gray-400 rounded-full shadow-lg mx-auto w-10/12"></div>
+            <div class="w-full h-8 bg-gray-400 rounded-full shadow-lg mx-auto w-10/12"></div>
+        </div>
+        {% endif %}
+
+        <!-- Left Page -->
+        <div
+            class="w-1/2 h-full z-20 {% if is_cover %}bg-transparent{% elif is_first_page %}border-r border-gray-950 bg-gray-900 p-8 flex items-center justify-center{% else %}border-r border-gray-950 bg-slate-100 p-6{% endif %}">
+            {% if is_cover %}
+            <!-- Empty "Table" space when binder is closed -->
+            {% elif is_first_page %}
+            <!-- Inside Cover -->
+            <div class="text-center opacity-30">
+                <div class="text-6xl mb-4">📚</div>
+                <h2 class="text-2xl font-bold">{{ binder.name }}</h2>
+                <p>Inside Cover</p>
+            </div>
+            {% else %}
+            <!-- Standard Left Page Grid -->
+            <div class="grid grid-cols-3 gap-4 h-full content-start">
+                {% for card in slots|slice:":9" %}
+                {% include "collection/partials/card_slot.html" with card=card %}
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Page -->
+        <div
+            class="w-1/2 h-full z-20 {% if is_cover %}bg-transparent flex items-center justify-center{% elif is_first_page %}bg-slate-100 p-6{% else %}bg-slate-100 p-6 border-l border-gray-950{% endif %} relative">
+            {% if is_cover %}
+            <!-- Front Cover Design (Now on the Right) -->
+            <!-- Entire cover is now a link -->
+            <a href="{% url 'binder_page' binder.id 1 %}"
+                class="block w-full h-[95%] bg-red-600 rounded-r-lg rounded-l-md shadow-2xl flex items-center justify-center relative overflow-hidden transform -rotate-1 origin-left hover:rotate-0 transition duration-500 cursor-pointer group"
+                style="background: radial-gradient(circle at center, #ef4444 0%, #b91c1c 100%);">
+
+                <!-- Binder Crease overlay on the left edge -->
+                <div class="absolute left-0 top-0 bottom-0 w-4 bg-gradient-to-r from-black/20 to-transparent"></div>
+
+                <!-- Pokeball Design Element -->
+                <div class="absolute inset-0 flex items-center justify-center opacity-10 pointer-events-none">
+                    <div class="w-96 h-96 rounded-full border-[20px] border-black"></div>
+                    <div class="absolute w-full h-4 bg-black"></div>
+                </div>
+
+                <div class="text-center text-white z-30 drop-shadow-lg">
+                    <h1 class="text-4xl font-extrabold mb-4 tracking-tighter">{{ binder.name }}</h1>
+                    <!-- Changed to span so it's just visual, since the parent <a> handles the click -->
+                    <span
+                        class="inline-block px-6 py-3 bg-white text-red-600 font-bold text-lg rounded-full shadow-lg group-hover:scale-105 group-hover:shadow-xl transition transform">
+                        Open Binder
+                    </span>
+                </div>
+            </a>
+            {% else %}
+            <!-- Standard Right Page Grid -->
+            <div class="grid grid-cols-3 gap-4 h-full content-start">
+                <!-- If Page 1, we use all slots (0-9) because slice logic handled it as one batch -->
+                <!-- But wait, views.py passes 'slots'. For Page 1 'slots' is just 9 items. -->
+
+                {% if is_first_page %}
+                {% for card in slots %}
+                {% include "collection/partials/card_slot.html" with card=card %}
+                {% endfor %}
+                {% else %}
+                {% for card in slots|slice:"9:" %}
+                {% include "collection/partials/card_slot.html" with card=card %}
+                {% endfor %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% if cards %}
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    {% for card in cards %}
+    <form action="{% url 'add_card' %}" method="POST" class="cursor-pointer group relative aspect-[2.5/3.5]">
+        {% csrf_token %}
+        <input type="hidden" name="name" value="{{ card.name }}">
+        <input type="hidden" name="card_id" value="{{ card.id }}">
+        <input type="hidden" name="image_url" value="{{ card.image_url }}">
+        <input type="hidden" name="set_name" value="{{ card.set_name }}">
+
+        <button type="submit" class="w-full h-full block text-left">
+            <img src="{{ card.image_url }}" alt="{{ card.name }}"
+                class="w-full h-full object-cover rounded-lg shadow-md group-hover:scale-105 group-hover:shadow-xl transition duration-200">
+            <div class="absolute inset-0 bg-black/0 group-hover:bg-black/10 rounded-lg transition"></div>
+        </button>
+    </form>
+    {% endfor %}
+</div>
+{% elif request.GET.q %}
+<div class="text-center py-10 text-gray-400">
+    <p>No cards found for "{{ request.GET.q }}"</p>
+</div>
+{% endif %}
