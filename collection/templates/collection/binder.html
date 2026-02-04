@@ -86,7 +86,7 @@
                 </div>
                 {% else %}
                 <!-- Standard Left Page Grid -->
-                <div class="grid grid-cols-3 gap-6 p-6 h-full content-center">
+                <div class="grid grid-cols-3 gap-x-6 gap-y-0 px-6 h-full content-evenly">
                     {% for card in slots|slice:":9" %}
                     {% include "collection/partials/card_slot.html" with card=card %}
                     {% endfor %}
@@ -125,7 +125,7 @@
                 </a>
                 {% else %}
                 <!-- Standard Right Page Grid -->
-                <div class="grid grid-cols-3 gap-6 p-6 h-full content-center">
+                <div class="grid grid-cols-3 gap-x-6 gap-y-0 px-6 h-full content-evenly">
                     <!-- If Page 1, we use all slots (0-9) because slice logic handled it as one batch -->
                     <!-- But wait, views.py passes 'slots'. For Page 1 'slots' is just 9 items. -->
 
