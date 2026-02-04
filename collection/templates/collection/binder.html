@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-screen flex flex-col items-center justify-center py-8 bg-gray-900">
+<!-- Subtracting approx Nav Height (80px) + Padding -->
+<div class="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center py-4 bg-gray-900">
 
     <!-- Navigation / Header -->
     {% if not is_cover %}
-    <div class="mb-6 flex items-center justify-between w-full max-w-6xl px-4">
+    <div class="mb-4 flex items-center justify-between w-full max-w-6xl px-4">
         <h1 class="text-3xl font-bold text-yellow-400">{{ binder.name }}</h1>
         <div class="flex space-x-4">
             {% if has_previous %}
@@ -29,7 +30,7 @@
     </div>
     {% else %}
     <!-- Invisible Spacer for Cover View to match Header Height -->
-    <div class="mb-6 flex items-center justify-between w-full max-w-6xl px-4 opacity-0 pointer-events-none"
+    <div class="mb-4 flex items-center justify-between w-full max-w-6xl px-4 opacity-0 pointer-events-none"
         aria-hidden="true">
         <h1 class="text-3xl font-bold">Spacer</h1>
         <div class="flex space-x-4">
@@ -39,7 +40,7 @@
     {% endif %}
 
     <!-- Binder Container Wrapper to allow absolute sidebar -->
-    <div class="relative w-full max-w-6xl aspect-[4/3]">
+    <div class="relative w-full max-w-6xl max-h-[75vh] aspect-[4/3]">
         <!-- Delete Sidebar (Left of the binder) -->
         <div class="absolute -left-28 top-0 bottom-0 flex flex-col justify-center items-center z-40">
             <form action="{% url 'delete_binder' binder.id %}" method="POST"
@@ -85,7 +86,7 @@
                 </div>
                 {% else %}
                 <!-- Standard Left Page Grid -->
-                <div class="grid grid-cols-3 gap-4 h-full content-center">
+                <div class="grid grid-cols-3 gap-6 p-6 h-full content-center">
                     {% for card in slots|slice:":9" %}
                     {% include "collection/partials/card_slot.html" with card=card %}
                     {% endfor %}
@@ -124,7 +125,7 @@
                 </a>
                 {% else %}
                 <!-- Standard Right Page Grid -->
-                <div class="grid grid-cols-3 gap-4 h-full content-center">
+                <div class="grid grid-cols-3 gap-6 p-6 h-full content-center">
                     <!-- If Page 1, we use all slots (0-9) because slice logic handled it as one batch -->
                     <!-- But wait, views.py passes 'slots'. For Page 1 'slots' is just 9 items. -->
 
