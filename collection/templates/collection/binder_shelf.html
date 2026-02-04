@@ -48,20 +48,84 @@
             {% endfor %}
 
             <!-- Create New Binder Card -->
-            {% if binders|length < 3 %} <div
-                class="aspect-[3/4] bg-gray-800 rounded-lg border-2 border-dashed border-gray-600 flex flex-col items-center justify-center hover:border-yellow-500 hover:bg-gray-750 transition cursor-pointer p-6">
-                <form action="{% url 'create_binder' %}" method="POST" class="w-full text-center">
+            {% if binders|length < 3 %} <div id="new-binder-card"
+                class="aspect-[3/4] bg-gray-800 rounded-lg border-2 border-dashed border-gray-600 flex flex-col items-center justify-center hover:border-yellow-500 hover:bg-gray-750 transition cursor-pointer p-6 relative group"
+                onclick="toggleNewBinder(this)">
+
+                <!-- Initial View: Just the Plus -->
+                <div id="initial-view"
+                    class="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300">
+                    <h3 class="text-xl font-bold text-gray-400 mb-4 group-hover:text-yellow-400 transition">New Binder
+                    </h3>
+                    <div
+                        class="w-16 h-16 rounded-full bg-gray-700 group-hover:bg-yellow-600 text-white flex items-center justify-center shadow-lg transition-all duration-300 transform group-hover:scale-110">
+                        <span class="text-4xl pb-1">+</span>
+                    </div>
+                </div>
+
+                <!-- Form View: Hidden Initially -->
+                <form id="form-view" action="{% url 'create_binder' %}" method="POST"
+                    class="w-full text-center hidden opacity-0 transition-opacity duration-300"
+                    onclick="event.stopPropagation()">
                     {% csrf_token %}
-                    <h3 class="text-xl font-bold text-gray-400 mb-4">New Binder</h3>
+                    <h3 class="text-xl font-bold text-gray-200 mb-4">Name Your Binder</h3>
                     <input type="text" name="name"
-                        class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg py-2 px-3 mb-2 text-sm focus:ring-1 focus:ring-yellow-500 focus:outline-none"
-                        placeholder="Binder Name..." required>
+                        class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg py-3 px-4 mb-3 text-base focus:ring-2 focus:ring-yellow-500 focus:outline-none placeholder-gray-500"
+                        placeholder="e.g. Rare Holos..." required autocomplete="off">
                     <button type="submit"
-                        class="inline-flex items-center justify-center w-10 h-10 rounded-full bg-yellow-600 hover:bg-yellow-500 text-white shadow-lg">
-                        <span class="text-2xl leading-none mb-1">+</span>
+                        class="w-full py-2 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-lg shadow-lg transition">
+                        Create
                     </button>
+                    <button type="button" onclick="resetNewBinder(event)"
+                        class="mt-2 text-gray-500 hover:text-gray-300 text-sm underline">Cancel</button>
                 </form>
         </div>
+
+        <script>
+            function toggleNewBinder(card) {
+                const initialView = card.querySelector('#initial-view');
+                const formView = card.querySelector('#form-view');
+                const input = formView.querySelector('input');
+
+                if (formView.classList.contains('hidden')) {
+                    // Switch to Form
+                    initialView.classList.add('opacity-0', 'pointer-events-none');
+                    setTimeout(() => {
+                        initialView.classList.add('hidden');
+                        formView.classList.remove('hidden');
+                        // Small delay to allow display:block to apply before opacity transition
+                        requestAnimationFrame(() => {
+                            formView.classList.remove('opacity-0');
+                            input.focus();
+                        });
+                    }, 200);
+
+                    // Disable card click while form is active (handled by stopPropagation on form)
+                    card.onclick = null;
+                }
+            }
+
+            function resetNewBinder(event) {
+                event.stopPropagation();
+                const card = document.getElementById('new-binder-card');
+                const initialView = card.querySelector('#initial-view');
+                const formView = card.querySelector('#form-view');
+
+                formView.classList.add('opacity-0');
+                setTimeout(() => {
+                    formView.classList.add('hidden');
+                    initialView.classList.remove('hidden');
+                    requestAnimationFrame(() => {
+                        initialView.classList.remove('opacity-0', 'pointer-events-none');
+                    });
+                }, 200);
+
+                // Re-enable toggle
+                setTimeout(() => {
+                    card.onclick = function () { toggleNewBinder(this); };
+                }, 200);
+            }
+        </script>
         {% endif %}
     </div>
 </div>
