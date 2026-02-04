@@ -15,11 +15,14 @@ def binder_shelf(request):
 
 @require_http_methods(["POST"])
 def create_binder(request):
+    if Binder.objects.count() >= 3:
+        return redirect('binder_shelf')
+        
     name = request.POST.get('name')
     if name:
         binder = Binder.objects.create(name=name)
-        # Redirect to the cover of the new binder
-        return redirect('binder_cover', binder_id=binder.id)
+        # Redirect to the cover of the new binder (Page 1)
+        return redirect('binder_page', binder_id=binder.id, page=1)
     return redirect('binder_shelf')
 
 def search_cards(request):
@@ -135,3 +138,9 @@ def binder(request, binder_id, page=1):
     }
     
     return render(request, "collection/binder.html", context)
+
+@require_http_methods(["POST"])
+def delete_binder(request, binder_id):
+    binder = get_object_or_404(Binder, pk=binder_id)
+    binder.delete()
+    return redirect('binder_shelf')
