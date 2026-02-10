@@ -26,8 +26,9 @@ def create_binder(request):
 
 def search_cards(request):
     query = request.GET.get('q', '')
+    binder_id = request.GET.get('binder_id')
     cards = search_card(query)
-    return render(request, 'collection/partials/search_results.html', {'cards': cards})
+    return render(request, 'collection/partials/search_results.html', {'cards': cards, 'binder_id': binder_id})
 
 @require_http_methods(["POST"])
 def add_card(request, binder_id):

@@ -1,4 +1,7 @@
 import requests
+import os
+
+
 
 def search_card(query):
     """
@@ -8,15 +11,21 @@ def search_card(query):
         return []
         
     url = "https://api.pokemontcg.io/v2/cards"
+    # Use prefix search for faster results and better relevance
+    # "char*" instead of "*char*"
     params = {
-        "q": f"name:*{query}*",
+        "q": f"name:{query}*",
         "pageSize": 12,
         "page": 1,
         "select": "id,name,set,images"
     }
     
+    # Temporarily removing API key to isolate issue
+    # api_key = os.getenv('POKEMON_TCG_API_KEY')
+    # headers = {'X-Api-Key': api_key} if api_key else {}
+
     try:
-        response = requests.get(url, params=params)
+        response = requests.get(url, params=params, timeout=5) # Increased timeout slightly
         response.raise_for_status()
         data = response.json()
         
@@ -32,5 +41,5 @@ def search_card(query):
             
         return cards
     except Exception as e:
-        print(f"Error fetching cards: {e}")
+        print(f"API Error ({e})")
         return []

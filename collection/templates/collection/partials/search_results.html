@@ -1,7 +1,7 @@
 {% if cards %}
 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
     {% for card in cards %}
-    <form action="{% url 'add_card' %}" method="POST" class="cursor-pointer group relative aspect-[2.5/3.5]">
+    <form action="{% url 'add_card' binder_id %}" method="POST" class="cursor-pointer group relative aspect-[2.5/3.5]">
         {% csrf_token %}
         <input type="hidden" name="name" value="{{ card.name }}">
         <input type="hidden" name="card_id" value="{{ card.id }}">
