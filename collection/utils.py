@@ -10,34 +10,39 @@ def search_card(query):
     if not query:
         return []
         
-    url = "https://api.pokemontcg.io/v2/cards"
-    # Use prefix search for faster results and better relevance
-    # "char*" instead of "*char*"
-    params = {
-        "q": f"name:{query}*",
-        "pageSize": 12,
-        "page": 1,
-        "select": "id,name,set,images"
-    }
+    url = "https://api.tcgdex.net/v2/en/cards"
+    params = {"name": query}
     
-    # Temporarily removing API key to isolate issue
-    # api_key = os.getenv('POKEMON_TCG_API_KEY')
-    # headers = {'X-Api-Key': api_key} if api_key else {}
-
+    # User-Agent is good practice
+    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'}
+    
     try:
-        response = requests.get(url, params=params, timeout=5) # Increased timeout slightly
+        response = requests.get(url, params=params, headers=headers, timeout=10)
         response.raise_for_status()
         data = response.json()
         
         cards = []
-        for item in data.get('data', []):
-            cards.append({
-                'id': item.get('id'),
-                'name': item.get('name'),
-                'set_name': item.get('set', {}).get('name'),
-                'image_url': item.get('images', {}).get('large'),
-                'small_image_url': item.get('images', {}).get('small')
-            })
+        # TCGdex returns a list of card summaries or a dict (if error/single). 
+        # Typically it's a list for search.
+        if isinstance(data, list):
+            for item in data:
+                # TCGdex image is a base URL without extension
+                base_image = item.get('image')
+                image_url = f"{base_image}/high.webp" if base_image else None
+                small_image_url = f"{base_image}/low.webp" if base_image else None
+                
+                # Enforce "starts with" logic (API does "contains")
+                name = item.get('name', '')
+                if not name.lower().startswith(query.lower()):
+                    continue
+
+                cards.append({
+                    'id': item.get('id'),
+                    'name': name,
+                    'set_name': None,  # Basic search doesn't return set name
+                    'image_url': image_url,
+                    'small_image_url': small_image_url
+                })
             
         return cards
     except Exception as e:
