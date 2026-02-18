@@ -21,7 +21,12 @@ class PokemonCard(models.Model):
     name = models.CharField(max_length=100)
     card_id = models.CharField(max_length=50, unique=True)
     image_url = models.URLField()
+    image_url = models.URLField()
     set_name = models.CharField(max_length=100)
+    position = models.PositiveIntegerField(default=0) # To maintain grid position
+    
+    class Meta:
+        ordering = ['position']
     
     def __str__(self):
         return f"{self.name} ({self.set_name})"

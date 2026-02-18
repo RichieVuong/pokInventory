@@ -40,13 +40,20 @@ def add_card(request, binder_id):
     image_url = request.POST.get('image_url')
     set_name = request.POST.get('set_name')
     
+    # Find the first available position
+    used_positions = set(PokemonCard.objects.filter(binder=binder).values_list('position', flat=True))
+    position = 1
+    while position in used_positions:
+        position += 1
+
     # Create card and assign to this binder
     PokemonCard.objects.create(
         binder=binder,
         name=name,
         card_id=card_id,
         image_url=image_url,
-        set_name=set_name
+        set_name=set_name,
+        position=position
     )
     
     # Return to the binder view (or trigger a refresh)
@@ -94,34 +101,45 @@ def binder(request, binder_id, page=1):
         return render(request, "collection/binder.html", context)
 
     if page == 1:
-        start_index = 0
-        end_index = 9
+        start_pos = 1
+        end_pos = 9
         slots_needed = 9
     else:
-        # Page 1 took 9 cards.
-        # Page 2 starts at 9, ends at 9 + 18 = 27
-        # Page 3 starts at 27, ends at 27 + 18 = 45
-        start_index = 9 + (page - 2) * 18
-        end_index = start_index + 18
+        # Page 1 took positions 1-9.
+        # Page 2 starts at 10, ends at 10 + 17 = 27 (Wait, logic check)
+        # Old logic: Page 2 starts after 9 items.
+        # New logic: Page 2 is positions 10 to 27 (18 items).
+        start_pos = 10 + (page - 2) * 18
+        end_pos = start_pos + 17 # Inclusive range
         slots_needed = 18
         
-    # Get the cards for this page
-    page_cards = all_cards[start_index:end_index]
+    # Get the cards for this page range
+    page_cards = PokemonCard.objects.filter(
+        binder=current_binder, 
+        position__gte=start_pos, 
+        position__lte=end_pos
+    )
     
-    # Padding Logic: Fill the rest of the page with None if we run out of cards
-    # This ensures the 3x3 grid always looks like a grid, just with empty slots
-    filled_slots = len(page_cards)
-    empty_slots_needed = max(0, slots_needed - filled_slots)
+    # Create a map of position -> card
+    card_map = {card.position: card for card in page_cards}
     
-    current_slots = page_cards + [None] * empty_slots_needed
+    # Build the slots list
+    current_slots = []
+    for i in range(slots_needed):
+        current_pos = start_pos + i
+        current_slots.append(card_map.get(current_pos))
+        
+    # Calculate Total Pages based on the highest position card
+    # This might leave empty pages if there's a huge gap, but it's consistent.
+    # Alternatively, count total items and do math? 
+    # Let's stick to total items logic for now, but really "last page" is determined by max position.
+    max_position_card = PokemonCard.objects.filter(binder=current_binder).order_by('-position').first()
+    max_pos = max_position_card.position if max_position_card else 0
     
-    # Calculate Total Pages
-    total_cards = len(all_cards)
-    if total_cards <= 9:
+    if max_pos <= 9:
         total_pages = 1
     else:
-        # Subtract first 9, then divide remainder by 18, round up
-        remaining = total_cards - 9
+        remaining = max_pos - 9
         total_pages = 1 + math.ceil(remaining / 18)
 
     context = {
@@ -144,3 +162,20 @@ def delete_binder(request, binder_id):
     binder = get_object_or_404(Binder, pk=binder_id)
     binder.delete()
     return redirect('binder_shelf')
+
+@require_http_methods(["POST"])
+def delete_card(request, card_id):
+    card = get_object_or_404(PokemonCard, pk=card_id)
+    binder_id = card.binder.id
+    # Calculate which page the card was on to redirect back to the same page
+    # This is a bit complex because cards shift. 
+    # For now, let's just redirect to page 1 or the binder cover.
+    # Refined UX: Redirect to the page the card *was* on? 
+    # Since we don't track page in card model, we'd need to calculate it on the fly or pass it in.
+    # Passing it in via query param or form data is best.
+    
+    page = request.POST.get('page', 1)
+    
+    card.delete()
+    return redirect('binder_page', binder_id=binder_id, page=page)
+
