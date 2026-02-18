@@ -7,6 +7,8 @@
         <input type="hidden" name="card_id" value="{{ card.id }}">
         <input type="hidden" name="image_url" value="{{ card.image_url }}">
         <input type="hidden" name="set_name" value="{{ card.set_name }}">
+        <input type="hidden" name="page" value="{{ page }}">
+        <input type="hidden" name="position" value="{{ position }}">
 
         <button type="submit" class="w-full h-full block text-left">
             <img src="{{ card.image_url }}" alt="{{ card.name }}"

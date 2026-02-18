@@ -20,9 +20,9 @@
                 <input type="text" name="q" id="search-input"
                     class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg py-4 px-6 pl-12 focus:outline-none focus:ring-2 focus:ring-yellow-500 text-lg placeholder-gray-500"
                     placeholder="Search for a Pokemon (e.g. Charizard, Pikachu)..." hx-get="{% url 'search_cards' %}"
-                    hx-vals='{"binder_id": "{{ binder.id }}"}' hx-trigger="keyup changed delay:500ms, search"
-                    hx-target="#search-results" hx-indicator="#search-loading" autofocus
-                    oninput="localStorage.setItem('lastSearch', this.value)">
+                    hx-vals='{"binder_id": "{{ binder.id }}", "page": "{{ page }}", "position": "{{ position }}"}'
+                    hx-trigger="keyup changed delay:500ms, search" hx-target="#search-results"
+                    hx-indicator="#search-loading" autofocus oninput="localStorage.setItem('lastSearch', this.value)">
                 <script>
                     (function () {
                         var input = document.getElementById('search-input');

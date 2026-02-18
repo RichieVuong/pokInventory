@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-[80vh] flex flex-col items-center justify-center p-8">
+<div class="min-h-[80vh] flex flex-col items-center p-4 pt-10">
 
     {% if not binders %}
     <!-- Empty State: Create First Binder -->
@@ -25,7 +25,42 @@
     {% else %}
     <!-- Bookshelf: List of Binders -->
     <div class="w-full max-w-6xl">
-        <h1 class="text-4xl font-bold mb-10 text-center text-white">Your Collection</h1>
+        <!-- Stats Banner & Header -->
+        <div
+            class="bg-gray-800 rounded-2xl px-6 py-4 mb-12 shadow-lg border border-gray-700 flex justify-between items-center">
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">My Shelves</h1>
+                <div class="flex gap-6 text-gray-400 text-sm">
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-gray-900 p-1 rounded">📚</span>
+                            <span>{{ binders|length }} / 3 Binders</span>
+                        </div>
+                        <!-- Progress Bar -->
+                        <div class="w-full h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                            <div class="h-full bg-blue-500 rounded-full transition-all duration-500"
+                                style="width: calc(100% * {{ binders|length }} / 3)"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="bg-gray-900 p-1 rounded">🃏</span>
+                        <span>{{ capacity }} Cards per Binder</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Binder Button (Header) -->
+            {% if binders|length < 3 %} <button onclick="toggleNewBinderModal()"
+                class="bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-yellow-500/20 transition flex items-center gap-2">
+                <span class="text-xl">+</span> Add Binder
+                </button>
+                {% else %}
+                <button disabled class="bg-gray-700 text-gray-500 font-bold py-3 px-6 rounded-lg cursor-not-allowed"
+                    title="Maximum 3 binders reached">
+                    Max Binders Reached
+                </button>
+                {% endif %}
+        </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {% for binder in binders %}
@@ -42,91 +77,94 @@
                     </div>
                     <h3 class="text-2xl font-bold mb-2 group-hover:text-yellow-300 transition">{{ binder.name }}
                     </h3>
-                    <p class="opacity-70 text-sm">{{ binder.cards.count }} Cards</p>
+                    {% if binder.description %}
+                    <p class="text-gray-200 text-xs mb-2 italic line-clamp-2 max-w-[80%]">"{{ binder.description }}"</p>
+                    {% endif %}
+                    <p class="opacity-70 text-sm mt-auto">{{ binder.cards.count }} Cards</p>
                 </div>
             </a>
             {% endfor %}
 
-            <!-- Create New Binder Card -->
-            {% if binders|length < 3 %} <div id="new-binder-card"
-                class="aspect-[3/4] bg-gray-800 rounded-lg border-2 border-dashed border-gray-600 flex flex-col items-center justify-center hover:border-yellow-500 hover:bg-gray-750 transition cursor-pointer p-6 relative group"
-                onclick="toggleNewBinder(this)">
+            <!-- Removed the old "Add Binder" card from grid -->
+        </div>
 
-                <!-- Initial View: Just the Plus -->
-                <div id="initial-view"
-                    class="absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300">
-                    <h3 class="text-xl font-bold text-gray-400 mb-4 group-hover:text-yellow-400 transition">New Binder
-                    </h3>
-                    <div
-                        class="w-16 h-16 rounded-full bg-gray-700 group-hover:bg-yellow-600 text-white flex items-center justify-center shadow-lg transition-all duration-300 transform group-hover:scale-110">
-                        <span class="text-4xl pb-1">+</span>
-                    </div>
-                </div>
+        <!-- Create Binder Modal -->
+        <div id="new-binder-modal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden opacity-0 transition-opacity duration-300"
+            onclick="toggleNewBinderModal()">
+            <div class="relative bg-gray-800 rounded-xl shadow-2xl w-full max-w-md p-6 border border-gray-700 transform scale-95 transition-transform duration-300"
+                id="modal-content" onclick="event.stopPropagation()">
+                <button onclick="toggleNewBinderModal()"
+                    class="absolute top-4 right-4 text-gray-400 hover:text-white z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
 
-                <!-- Form View: Hidden Initially -->
-                <form id="form-view" action="{% url 'create_binder' %}" method="POST"
-                    class="w-full text-center hidden opacity-0 transition-opacity duration-300"
-                    onclick="event.stopPropagation()">
+                <form action="{% url 'create_binder' %}" method="POST" class="space-y-4">
                     {% csrf_token %}
-                    <h3 class="text-xl font-bold text-gray-200 mb-4">Name Your Binder</h3>
-                    <input type="text" name="name"
-                        class="w-full bg-gray-900 border border-gray-700 text-white rounded-lg py-3 px-4 mb-3 text-base focus:ring-2 focus:ring-yellow-500 focus:outline-none placeholder-gray-500"
-                        placeholder="e.g. Rare Holos..." required autocomplete="off">
-                    <button type="submit"
-                        class="w-full py-2 bg-yellow-600 hover:bg-yellow-500 text-white font-bold rounded-lg shadow-lg transition">
-                        Create
+                    <div>
+                        <input type="text" name="name" id="binder-name-input"
+                            class="w-full bg-transparent border-b-2 border-gray-700 text-white text-3xl font-bold py-2 focus:border-yellow-500 focus:outline-none placeholder-gray-600 appearance-none"
+                            placeholder="Binder Name" required oninput="checkBinderName()" autocomplete="off">
+                    </div>
+                    <div>
+                        <textarea name="description" rows="3"
+                            class="w-full bg-transparent border-none text-gray-300 py-2 focus:ring-0 focus:outline-none placeholder-gray-600 resize-none appearance-none"
+                            placeholder="Add description"></textarea>
+                    </div>
+
+                    <button type="submit" id="create-binder-btn" disabled
+                        class="w-full py-3 bg-gray-700 text-gray-500 font-bold rounded-lg cursor-not-allowed transition-all duration-300">
+                        Create Binder
                     </button>
-                    <button type="button" onclick="resetNewBinder(event)"
-                        class="mt-2 text-gray-500 hover:text-gray-300 text-sm underline">Cancel</button>
                 </form>
+            </div>
         </div>
 
         <script>
-            function toggleNewBinder(card) {
-                const initialView = card.querySelector('#initial-view');
-                const formView = card.querySelector('#form-view');
-                const input = formView.querySelector('input');
+            function checkBinderName() {
+                const input = document.getElementById('binder-name-input');
+                const btn = document.getElementById('create-binder-btn');
 
-                if (formView.classList.contains('hidden')) {
-                    // Switch to Form
-                    initialView.classList.add('opacity-0', 'pointer-events-none');
-                    setTimeout(() => {
-                        initialView.classList.add('hidden');
-                        formView.classList.remove('hidden');
-                        // Small delay to allow display:block to apply before opacity transition
-                        requestAnimationFrame(() => {
-                            formView.classList.remove('opacity-0');
-                            input.focus();
-                        });
-                    }, 200);
-
-                    // Disable card click while form is active (handled by stopPropagation on form)
-                    card.onclick = null;
+                if (input.value.trim().length > 0) {
+                    btn.disabled = false;
+                    btn.classList.remove('bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
+                    btn.classList.add('bg-yellow-500', 'hover:bg-yellow-400', 'text-black', 'shadow-lg', 'hover:shadow-yellow-500/50');
+                } else {
+                    btn.disabled = true;
+                    btn.classList.add('bg-gray-700', 'text-gray-500', 'cursor-not-allowed');
+                    btn.classList.remove('bg-yellow-500', 'hover:bg-yellow-400', 'text-black', 'shadow-lg', 'hover:shadow-yellow-500/50');
                 }
             }
 
-            function resetNewBinder(event) {
-                event.stopPropagation();
-                const card = document.getElementById('new-binder-card');
-                const initialView = card.querySelector('#initial-view');
-                const formView = card.querySelector('#form-view');
+            function toggleNewBinderModal() {
+                const modal = document.getElementById('new-binder-modal');
+                const content = document.getElementById('modal-content');
+                const input = document.getElementById('binder-name-input');
 
-                formView.classList.add('opacity-0');
-                setTimeout(() => {
-                    formView.classList.add('hidden');
-                    initialView.classList.remove('hidden');
+                if (modal.classList.contains('hidden')) {
+                    // Open
+                    modal.classList.remove('hidden');
                     requestAnimationFrame(() => {
-                        initialView.classList.remove('opacity-0', 'pointer-events-none');
+                        modal.classList.remove('opacity-0');
+                        content.classList.remove('scale-95');
+                        content.classList.add('scale-100');
                     });
-                }, 200);
-
-                // Re-enable toggle
-                setTimeout(() => {
-                    card.onclick = function () { toggleNewBinder(this); };
-                }, 200);
+                    input.focus();
+                    checkBinderName();
+                } else {
+                    // Close
+                    modal.classList.add('opacity-0');
+                    content.classList.remove('scale-100');
+                    content.classList.add('scale-95');
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, 300);
+                }
             }
         </script>
-        {% endif %}
     </div>
 </div>
 {% endif %}

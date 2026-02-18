@@ -30,7 +30,8 @@
     <!-- Empty Slot: "Add Card" on Hover -->
     <div
         class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/10 backdrop-blur-[2px]">
-        <button hx-get="{% url 'binder' binder.id %}?modal=true" hx-target="body" hx-swap="beforeend"
+        <button hx-get="{% url 'binder' binder.id %}?modal=true&page={{ page }}&position={{ position }}"
+            hx-target="body" hx-swap="beforeend"
             class="bg-yellow-500 hover:bg-yellow-400 text-white font-bold py-2 px-4 rounded-full shadow-lg transform scale-90 group-hover:scale-105 transition-transform flex items-center gap-2 cursor-pointer">
             <span>+</span> Add Card
         </button>

@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 
 class Binder(models.Model):
     name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
@@ -19,7 +20,7 @@ class Binder(models.Model):
 class PokemonCard(models.Model):
     binder = models.ForeignKey(Binder, on_delete=models.CASCADE, related_name='cards', null=True, blank=True)
     name = models.CharField(max_length=100)
-    card_id = models.CharField(max_length=50, unique=True)
+    card_id = models.CharField(max_length=50)
     image_url = models.URLField()
     image_url = models.URLField()
     set_name = models.CharField(max_length=100)

@@ -87,8 +87,8 @@
                 {% else %}
                 <!-- Standard Left Page Grid -->
                 <div class="grid grid-cols-3 gap-x-6 gap-y-0 px-6 h-full content-evenly">
-                    {% for card in slots|slice:":9" %}
-                    {% include "collection/partials/card_slot.html" with card=card %}
+                    {% for slot in slots|slice:":9" %}
+                    {% include "collection/partials/card_slot.html" with card=slot.card position=slot.position %}
                     {% endfor %}
                 </div>
                 {% endif %}
@@ -130,12 +130,12 @@
                     <!-- But wait, views.py passes 'slots'. For Page 1 'slots' is just 9 items. -->
 
                     {% if is_first_page %}
-                    {% for card in slots %}
-                    {% include "collection/partials/card_slot.html" with card=card %}
+                    {% for slot in slots %}
+                    {% include "collection/partials/card_slot.html" with card=slot.card position=slot.position %}
                     {% endfor %}
                     {% else %}
-                    {% for card in slots|slice:"9:" %}
-                    {% include "collection/partials/card_slot.html" with card=card %}
+                    {% for slot in slots|slice:"9:" %}
+                    {% include "collection/partials/card_slot.html" with card=slot.card position=slot.position %}
                     {% endfor %}
                     {% endif %}
                 </div>

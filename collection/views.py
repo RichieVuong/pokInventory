@@ -9,8 +9,8 @@ def index(request):
     return render(request, "collection/index.html")
 
 def binder_shelf(request):
-    binders = Binder.objects.order_by('-created_at')
-    return render(request, "collection/binder_shelf.html", {'binders': binders})
+    binders = Binder.objects.order_by('created_at')
+    return render(request, "collection/binder_shelf.html", {'binders': binders, 'capacity': 180})
 
 @require_http_methods(["POST"])
 def create_binder(request):
@@ -18,8 +18,9 @@ def create_binder(request):
         return redirect('binder_shelf')
         
     name = request.POST.get('name')
+    description = request.POST.get('description', '')
     if name:
-        binder = Binder.objects.create(name=name)
+        binder = Binder.objects.create(name=name, description=description)
         # Redirect to the cover of the new binder (Page 1)
         return redirect('binder_page', binder_id=binder.id, page=1)
     return redirect('binder_shelf')
@@ -27,8 +28,12 @@ def create_binder(request):
 def search_cards(request):
     query = request.GET.get('q', '')
     binder_id = request.GET.get('binder_id')
+    page_num = request.GET.get('page', 1)
+    position = request.GET.get('position')
     cards = search_card(query)
-    return render(request, 'collection/partials/search_results.html', {'cards': cards, 'binder_id': binder_id})
+    return render(request, 'collection/partials/search_results.html', {
+        'cards': cards, 'binder_id': binder_id, 'page': page_num, 'position': position
+    })
 
 @require_http_methods(["POST"])
 def add_card(request, binder_id):
@@ -40,11 +45,25 @@ def add_card(request, binder_id):
     image_url = request.POST.get('image_url')
     set_name = request.POST.get('set_name')
     
-    # Find the first available position
-    used_positions = set(PokemonCard.objects.filter(binder=binder).values_list('position', flat=True))
-    position = 1
-    while position in used_positions:
-        position += 1
+    target_page = int(request.POST.get('page', 1))
+    explicit_position = request.POST.get('position')
+    
+    if explicit_position and explicit_position != 'None' and explicit_position != '':
+        position = int(explicit_position)
+        # We trust the user wants it here. If there's already a card, they will overlap (acceptable for now)
+        # or we could shift things. For this request, "place directly in the box" implies exact position.
+    else:
+        # Calculate start position for this page
+        if target_page == 1:
+            start_pos = 1
+        else:
+            start_pos = 10 + (target_page - 2) * 18
+
+        # Find the first available position starting from this page
+        used_positions = set(PokemonCard.objects.filter(binder=binder).values_list('position', flat=True))
+        position = start_pos
+        while position in used_positions:
+            position += 1
 
     # Create card and assign to this binder
     PokemonCard.objects.create(
@@ -57,7 +76,8 @@ def add_card(request, binder_id):
     )
     
     # Return to the binder view (or trigger a refresh)
-    # Ideally find which page the new card landed on, but defaulting to last page is okay for MVP
+    # Redirect to the page we just added to (which is likely target_page, unless it overflowed)
+    return redirect('binder_page', binder_id=binder.id, page=target_page)
     # For now, just go to the open binder (Page 1)
     return redirect('binder_page', binder_id=binder.id, page=1)
 
@@ -66,7 +86,13 @@ def binder(request, binder_id, page=1):
 
     # Check if this is a request for the Search Modal
     if request.htmx and request.GET.get('modal') == 'true':
-         return render(request, 'collection/partials/search_modal.html', {'binder': current_binder})
+         page_num = request.GET.get('page', 1)
+         position = request.GET.get('position')
+         return render(request, 'collection/partials/search_modal.html', {
+             'binder': current_binder, 
+             'page': page_num,
+             'position': position
+         })
 
     # Fetch Real Cards for this Binder
     all_cards = list(PokemonCard.objects.filter(binder=current_binder))
@@ -127,20 +153,25 @@ def binder(request, binder_id, page=1):
     current_slots = []
     for i in range(slots_needed):
         current_pos = start_pos + i
-        current_slots.append(card_map.get(current_pos))
+        current_slots.append({
+            'card': card_map.get(current_pos),
+            'position': current_pos
+        })
         
     # Calculate Total Pages based on the highest position card
     # This might leave empty pages if there's a huge gap, but it's consistent.
     # Alternatively, count total items and do math? 
     # Let's stick to total items logic for now, but really "last page" is determined by max position.
-    max_position_card = PokemonCard.objects.filter(binder=current_binder).order_by('-position').first()
-    max_pos = max_position_card.position if max_position_card else 0
+    # Fixed Binder Capacity Logic
+    # 180 Cards Total
+    # Page 1: 9 Cards
+    # Remaining: 171 Cards -> ceil(171 / 18) = 10 pages
+    # Total Pages: 1 + 10 = 11
     
-    if max_pos <= 9:
-        total_pages = 1
-    else:
-        remaining = max_pos - 9
-        total_pages = 1 + math.ceil(remaining / 18)
+    total_pages = 11
+    
+    # Optional: If we want to support multiple binder sizes later, we can add a 'capacity' field to Binder model.
+    # For now, hardcoded to 11 pages (180 cards).
 
     context = {
         'binder': current_binder,
